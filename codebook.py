@@ -139,9 +139,6 @@ class Codebook:
             cw = codebook[t]
             cd = Codebook.colordist(x, cw.v)
             bright = Codebook.brightness(i, cw.i_min, cw.i_max)
-            #print("-----------------")
-            #print(x, cw.v)
-            #print(cd, bright)
             if cd < Codebook.E2 and bright:
                 cw.v = Codebook.calc_v(cw, x)
                 cw.i_min = min(i, cw.i_min)
@@ -176,13 +173,43 @@ class Codebook:
                 for x in range(i):
                     for k in range(j):
                         if (Codebook.is_foreground(img[x,k], codebooks[x,k])):
-                            img_fb[x,k] = np.array([0])
-                        else:
                             img_fb[x,k] = np.array([255])
+                        else:
+                            img_fb[x,k] = np.array([0])
                 cv.imshow('frame',img_fb.astype(np.uint8))
                 cv.waitKey(0)
                 cv.destroyAllWindows()        
+                cv.imwrite(filename, img_fb)
+                break
 
+
+    @staticmethod
+    def process_image(img):
+        """
+        Applies Erosion and Dilatation transformations on bw image to remove noise
+        """
+        kernel = np.ones((12,12),np.uint8)
+        img_dilation = cv.erode(img,kernel,iterations = 1)
+        img_erosion = cv.dilate(img_dilation,kernel,iterations = 1)
+        return img_erosion 
+
+    @staticmethod
+    def count_dots(dots_img):
+        """
+        Counts number of dots in a bw image
+        """
+        image, contours, hier = cv.findContours(dots_img, cv.RETR_EXTERNAL,cv.CHAIN_APPROX_NONE)
+        count = len(contours)
+        return count
+
+    @staticmethod
+    def count_people(img):
+        """
+        Counts number of people on a bw image generated from codebook
+        """
+        dots = Codebook.process_image(img)
+        count = Codebook.count_dots(dots)
+        return count
 
     @staticmethod
     def train_codebooks():
@@ -202,14 +229,9 @@ class Codebook:
             img = cv.imread(Codebook.DIR_TRAIN + filename, 1).astype(np.float32)
             x,y,z = img.shape
 
-            start = time.time()
             for i in range(x):
                 for j in range(y):
                     Codebook.create_codebook(codebooks[i,j], img[i,j], t)
-            end = time.time()
-
-            # Prints tempo
-            print('tempo imagem {0} : {1}'.format(t, str(end - start)))
 
             t += 1
             if t == Codebook.MAX_T:
