@@ -175,12 +175,8 @@ class Codebook:
                         if (Codebook.is_foreground(img[x,k], codebooks[x,k])):
                             img_fb[x,k] = np.array([255])
                         else:
-                            img_fb[x,k] = np.array([0])
-                cv.imshow('frame',img_fb.astype(np.uint8))
-                cv.waitKey(0)
-                cv.destroyAllWindows()        
+                            img_fb[x,k] = np.array([0])    
                 cv.imwrite(filename, img_fb)
-                break
 
 
     @staticmethod
